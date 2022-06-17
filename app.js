@@ -1,0 +1,54 @@
+/*
+  Telegram bot for Wikipedia search
+  Autor: Aghorii001
+  Instagram: @raw_be001
+  GitHub: https://github.com/Aghorii001
+  Version: 0.0.1
+*/
+
+// API's
+const algorithmia: any = require('algorithmia');
+const TelegramBot: any = require('node-telegram-bot-api');
+
+// API's Token
+const algorithmiaToken: string = 'algorithmia api token here';
+const botToken: string = 'telegram bot token here';
+
+// Bot Init
+const bot: any = new TelegramBot (botToken, {polling: true});
+
+// Return using mode to user
+bot.onText(/\/start/, (msg: any, match: any) => {
+    const chatId = msg.chat.id;
+    const opts = { reply_to_message_id: msg.message_id };
+    bot.sendMessage(chatId, "I'm here", opts);
+});
+
+//help
+bot.onText(/\/help/, (msg: any, match: any) => {
+  const chatId: number = msg.chat.id;
+  const opts = { reply_to_message_id: msg.message_id};
+  bot.sendMessage(chatId, 'Modo de usar: /wiki idioma termo_a_pesquisar' ,opts)
+});
+
+// Search 
+bot.onText(/\/wiki (.+) (.+)/, (msg: any, match: any) => {
+  const chatId: number  = msg.chat.id;
+  const opts = {reply_to_message_id: msg.message_id}
+  const input: any = {
+    "articleName": match[2],
+    "lang": match[1]
+  };
+
+  algorithmia.client(algorithmiaToken)
+    .algo("web/WikipediaParser/0.1.2")
+    .pipe(input)
+    .then((response: any) => {
+      try {
+        const res: string = response.get();
+        bot.sendMessage(chatId, `${res['summary']}`, opts);
+      } catch(Exception){
+        bot.sendMessage(chatId, "Falha a pegar resposta do Wikipedia", opts);
+      }
+    });
+});
